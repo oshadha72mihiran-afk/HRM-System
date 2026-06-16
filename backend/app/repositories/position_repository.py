@@ -1,0 +1,2 @@
+class PositionRepository:
+    pass
