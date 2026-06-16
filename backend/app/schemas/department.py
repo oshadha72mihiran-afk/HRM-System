@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.schemas.common import ORMBaseModel
 
 
@@ -18,4 +20,4 @@ class DepartmentUpdate(ORMBaseModel):
 
 
 class DepartmentRead(DepartmentBase):
-    id: int
+    id: UUID

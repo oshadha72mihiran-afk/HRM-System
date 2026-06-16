@@ -1,41 +1,85 @@
-from fastapi import APIRouter
+from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.db.session import get_db
 from app.schemas.payroll import PayrollCreate, PayrollRead, PayrollUpdate
 
 router = APIRouter()
 
 
+def _payroll_to_read(payroll) -> PayrollRead:
+    return PayrollRead(
+        id=payroll.id,
+        employee_id=payroll.employee_id,
+        month=payroll.month,
+        year=payroll.year,
+        basic_salary=payroll.basic_salary,
+        allowances=payroll.allowances,
+        deductions=payroll.deductions,
+        net_salary=payroll.net_salary,
+        payment_status=payroll.payment_status,
+    )
+
+
 @router.post("", response_model=PayrollRead)
-def create_payroll(payload: PayrollCreate) -> PayrollRead:
-    return PayrollRead(id=1, **payload.model_dump())
+def create_payroll(payload: PayrollCreate, database: Session = Depends(get_db)) -> PayrollRead:
+    from app.models.payroll import Payroll
+
+    payroll = Payroll(**payload.model_dump())
+    database.add(payroll)
+    database.commit()
+    database.refresh(payroll)
+    return _payroll_to_read(payroll)
 
 
 @router.get("", response_model=list[PayrollRead])
-def list_payrolls() -> list[PayrollRead]:
-    return []
+def list_payrolls(database: Session = Depends(get_db)) -> list[PayrollRead]:
+    from app.models.payroll import Payroll
+
+    payrolls = database.scalars(select(Payroll).order_by(Payroll.created_at.desc())).all()
+    return [_payroll_to_read(payroll) for payroll in payrolls]
 
 
 @router.get("/{payroll_id}", response_model=PayrollRead)
-def get_payroll(payroll_id: int) -> PayrollRead:
-    return PayrollRead(id=payroll_id, employee_id=1, month=6, year=2026, basic_salary=1000, allowances=100, deductions=50, net_salary=1050, payment_status="PENDING")
+def get_payroll(payroll_id: UUID, database: Session = Depends(get_db)) -> PayrollRead:
+    from fastapi import HTTPException, status
+    from app.models.payroll import Payroll
+
+    payroll = database.get(Payroll, payroll_id)
+    if payroll is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payroll not found")
+    return _payroll_to_read(payroll)
 
 
 @router.patch("/{payroll_id}", response_model=PayrollRead)
-def update_payroll(payroll_id: int, payload: PayrollUpdate) -> PayrollRead:
-    data = {
-        "employee_id": 1,
-        "month": 6,
-        "year": 2026,
-        "basic_salary": 1000,
-        "allowances": 100,
-        "deductions": 50,
-        "net_salary": 1050,
-        "payment_status": "PENDING",
-    }
-    data.update(payload.model_dump(exclude_unset=True))
-    return PayrollRead(id=payroll_id, **data)
+def update_payroll(payroll_id: UUID, payload: PayrollUpdate, database: Session = Depends(get_db)) -> PayrollRead:
+    from fastapi import HTTPException, status
+    from app.models.payroll import Payroll
+
+    payroll = database.get(Payroll, payroll_id)
+    if payroll is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payroll not found")
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(payroll, field, value)
+
+    database.commit()
+    database.refresh(payroll)
+    return _payroll_to_read(payroll)
 
 
 @router.delete("/{payroll_id}")
-def delete_payroll(payroll_id: int) -> dict[str, int]:
-    return {"deleted_id": payroll_id}
+def delete_payroll(payroll_id: UUID, database: Session = Depends(get_db)) -> dict[str, str]:
+    from fastapi import HTTPException, status
+    from app.models.payroll import Payroll
+
+    payroll = database.get(Payroll, payroll_id)
+    if payroll is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payroll not found")
+
+    database.delete(payroll)
+    database.commit()
+    return {"deleted_id": str(payroll_id)}

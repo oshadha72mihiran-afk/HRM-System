@@ -1,6 +1,8 @@
-from datetime import date
+from datetime import date, datetime
+from uuid import UUID
 
 from app.schemas.common import ORMBaseModel
+from app.models.enums import DocumentType, EmployeeStatus, EmploymentType
 
 
 class EmployeeBase(ORMBaseModel):
@@ -10,12 +12,12 @@ class EmployeeBase(ORMBaseModel):
     email: str
     phone: str | None = None
     address: str | None = None
-    department_id: int
-    position_id: int
-    joining_date: date | None = None
-    employment_type: str
+    department_id: UUID | None = None
+    position_id: UUID | None = None
+    joining_date: date
+    employment_type: EmploymentType = EmploymentType.FULL_TIME
     basic_salary: float
-    status: str = "ONBOARDING"
+    status: EmployeeStatus = EmployeeStatus.ONBOARDING
 
 
 class EmployeeCreate(EmployeeBase):
@@ -29,25 +31,26 @@ class EmployeeUpdate(ORMBaseModel):
     email: str | None = None
     phone: str | None = None
     address: str | None = None
-    department_id: int | None = None
-    position_id: int | None = None
+    department_id: UUID | None = None
+    position_id: UUID | None = None
     joining_date: date | None = None
-    employment_type: str | None = None
+    employment_type: EmploymentType | None = None
     basic_salary: float | None = None
-    status: str | None = None
+    status: EmployeeStatus | None = None
 
 
 class EmployeeRead(EmployeeBase):
-    id: int
+    id: UUID
 
 
 class EmployeeDocumentRead(ORMBaseModel):
-    id: int
-    employee_id: int
-    document_type: str
+    id: UUID
+    employee_id: UUID
+    document_type: DocumentType
     original_file_name: str
     stored_file_name: str
     file_path: str
     file_size: int
     mime_type: str
-    uploaded_by: int | None = None
+    uploaded_by: UUID
+    uploaded_at: datetime

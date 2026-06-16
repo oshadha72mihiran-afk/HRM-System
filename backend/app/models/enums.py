@@ -6,3 +6,34 @@ class UserRole(str, Enum):
     HR = "HR"
     MANAGER = "MANAGER"
     EMPLOYEE = "EMPLOYEE"
+
+
+class EmploymentType(str, Enum):
+    FULL_TIME = "FULL_TIME"
+    PART_TIME = "PART_TIME"
+    CONTRACT = "CONTRACT"
+    INTERN = "INTERN"
+
+
+class EmployeeStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    ONBOARDING = "ONBOARDING"
+    TERMINATED = "TERMINATED"
+
+
+class PaymentStatus(str, Enum):
+    PENDING = "PENDING"
+    PAID = "PAID"
+    FAILED = "FAILED"
+
+
+class DocumentType(str, Enum):
+    NIC_ID_COPY = "NIC_ID_COPY"
+    PASSPORT_COPY = "PASSPORT_COPY"
+    CV_RESUME = "CV_RESUME"
+    EDUCATION_CERTIFICATE = "EDUCATION_CERTIFICATE"
+    PREVIOUS_EMPLOYMENT_LETTER = "PREVIOUS_EMPLOYMENT_LETTER"
+    BANK_DETAILS = "BANK_DETAILS"
+    SIGNED_CONTRACT = "SIGNED_CONTRACT"
+    OTHER = "OTHER"
