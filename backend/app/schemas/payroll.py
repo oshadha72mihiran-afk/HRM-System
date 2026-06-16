@@ -1,3 +1,4 @@
+# backend/app/schemas/payroll.py
 from datetime import datetime
 from uuid import UUID
 
@@ -12,12 +13,17 @@ class PayrollBase(ORMBaseModel):
     basic_salary: float
     allowances: float = 0
     deductions: float = 0
-    net_salary: float = 0
     payment_status: PaymentStatus = PaymentStatus.PENDING
 
 
-class PayrollCreate(PayrollBase):
-    pass
+class PayrollCreate(ORMBaseModel):
+    employee_id: UUID
+    month: int
+    year: int
+    basic_salary: float
+    allowances: float = 0
+    deductions: float = 0
+    payment_status: PaymentStatus = PaymentStatus.PENDING
 
 
 class PayrollUpdate(ORMBaseModel):
@@ -27,12 +33,18 @@ class PayrollUpdate(ORMBaseModel):
     basic_salary: float | None = None
     allowances: float | None = None
     deductions: float | None = None
-    net_salary: float | None = None
     payment_status: PaymentStatus | None = None
 
 
-class PayrollRead(PayrollBase):
+class PayrollRead(ORMBaseModel):
     id: UUID
-    net_salary: float
+    employee_id: UUID
+    month: int
+    year: int
+    basic_salary: float
+    allowances: float
+    deductions: float
+    net_salary: float  # This is only for reading, not for creating/updating
+    payment_status: PaymentStatus
     created_at: datetime
     updated_at: datetime

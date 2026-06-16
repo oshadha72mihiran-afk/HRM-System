@@ -1,3 +1,4 @@
+# backend/app/models/payroll.py
 from uuid import UUID
 
 from sqlalchemy import Enum as SAEnum, ForeignKey, Integer, Numeric, text
@@ -19,7 +20,7 @@ class Payroll(TimestampMixin, Base):
     basic_salary: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     allowances: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, default=0)
     deductions: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, default=0)
-    net_salary: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    # net_salary is removed - it's a GENERATED column in the database
     payment_status: Mapped[PaymentStatus] = mapped_column(SAEnum(PaymentStatus, name="payment_status"), default=PaymentStatus.PENDING, nullable=False)
 
     employee = relationship("Employee", back_populates="payrolls")
