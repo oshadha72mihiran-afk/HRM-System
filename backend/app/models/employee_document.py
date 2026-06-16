@@ -1,3 +1,4 @@
+# backend/app/models/employee_document.py
 from uuid import UUID
 
 from datetime import datetime
@@ -28,6 +29,7 @@ class EmployeeDocument(TimestampMixin, Base):
     file_size: Mapped[int] = mapped_column(Integer, nullable=False)
     mime_type: Mapped[str] = mapped_column(String(100), nullable=False)
     uploaded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
-    uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("NOW()"), nullable=False)
+    # Remove uploaded_at from model - let database handle it with DEFAULT NOW()
+    # uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("NOW()"), nullable=False)
 
     employee = relationship("Employee", back_populates="documents")

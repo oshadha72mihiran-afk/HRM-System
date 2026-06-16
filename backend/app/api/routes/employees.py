@@ -1,3 +1,4 @@
+# backend/app/api/routes/employees.py
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
@@ -10,7 +11,6 @@ from app.models.enums import DocumentType, EmployeeStatus, EmploymentType
 from app.schemas.employee import EmployeeCreate, EmployeeDocumentRead, EmployeeRead, EmployeeUpdate
 
 router = APIRouter()
-
 
 ALLOWED_MIME_TYPES = {"application/pdf", "image/jpeg", "image/jpg", "image/png"}
 MAX_FILE_SIZE = 5 * 1024 * 1024
@@ -45,7 +45,7 @@ def _document_to_read(document) -> EmployeeDocumentRead:
         file_size=document.file_size,
         mime_type=document.mime_type,
         uploaded_by=document.uploaded_by,
-        uploaded_at=document.uploaded_at,
+        uploaded_at=document.created_at,  # Use created_at from TimestampMixin
     )
 
 
@@ -130,17 +130,24 @@ async def upload_employee_documents(
     created_documents: list[EmployeeDocumentRead] = []
     for upload in files:
         if upload.content_type not in ALLOWED_MIME_TYPES:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unsupported file type: {upload.content_type}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail=f"Unsupported file type: {upload.content_type}. Allowed: PDF, JPG, JPEG, PNG"
+            )
 
         contents = await upload.read()
         if len(contents) > MAX_FILE_SIZE:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"File too large: {upload.filename}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail=f"File too large: {upload.filename}. Max size: 5MB"
+            )
 
         suffix = Path(upload.filename or "document").suffix or ".bin"
         stored_name = f"{uuid4().hex}{suffix}"
         stored_path = upload_dir / stored_name
         stored_path.write_bytes(contents)
 
+        # Create document - let the database handle uploaded_at with DEFAULT NOW()
         document = EmployeeDocument(
             employee_id=employee_id,
             document_type=document_type,
@@ -150,6 +157,7 @@ async def upload_employee_documents(
             file_size=len(contents),
             mime_type=upload.content_type or "application/octet-stream",
             uploaded_by=current_user.id,
+            # uploaded_at is removed - database will set it automatically
         )
         database.add(document)
         database.flush()
@@ -164,7 +172,11 @@ async def upload_employee_documents(
 def list_employee_documents(employee_id: UUID, database: Session = Depends(get_db)) -> list[EmployeeDocumentRead]:
     from app.models.employee_document import EmployeeDocument
 
-    documents = database.scalars(select(EmployeeDocument).where(EmployeeDocument.employee_id == employee_id).order_by(EmployeeDocument.uploaded_at.desc())).all()
+    documents = database.scalars(
+        select(EmployeeDocument)
+        .where(EmployeeDocument.employee_id == employee_id)
+        .order_by(EmployeeDocument.created_at.desc())  # Use created_at from TimestampMixin
+    ).all()
     return [_document_to_read(document) for document in documents]
 
 
@@ -189,7 +201,10 @@ def delete_employee_document(document_id: UUID, database: Session = Depends(get_
     if document is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
 
+    # Delete file from disk
     Path(document.file_path).unlink(missing_ok=True)
+    
+    # Delete from database
     database.delete(document)
     database.commit()
     return {"deleted_id": str(document_id)}
