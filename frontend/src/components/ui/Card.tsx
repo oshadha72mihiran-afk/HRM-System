@@ -1,10 +1,25 @@
-import type { PropsWithChildren } from 'react';
-import { cn } from '@/lib/cn';
+import React from "react";
 
-type CardProps = PropsWithChildren<{
+interface CardProps {
+  children: React.ReactNode;
   className?: string;
-}>;
-
-export function Card({ className, children }: CardProps) {
-  return <section className={cn('rounded-3xl border border-white/10 bg-panel p-6 shadow-soft', className)}>{children}</section>;
+  hover?: boolean;
 }
+
+export const Card: React.FC<CardProps> = ({
+  children,
+  className = "",
+  hover = false,
+}) => {
+  return (
+    <div
+      className={`
+        bg-surface-container-lowest p-stack-md shadow-sm
+        ${hover ? "transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg" : ""}
+        ${className}
+      `}
+    >
+      {children}
+    </div>
+  );
+};

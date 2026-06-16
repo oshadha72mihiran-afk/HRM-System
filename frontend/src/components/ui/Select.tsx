@@ -1,26 +1,47 @@
-import type { SelectHTMLAttributes } from 'react';
-import { cn } from '@/lib/cn';
+import React from "react";
 
-type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
-};
+  error?: string;
+  options: Array<{ value: string; label: string }>;
+}
 
-export function Select({ className, label, id, children, ...props }: SelectProps) {
-  const selectId = id ?? label?.toLowerCase().replace(/\s+/g, '-') ?? undefined;
+export const Select: React.FC<SelectProps> = ({
+  label,
+  error,
+  options,
+  className = "",
+  id,
+  ...props
+}) => {
+  const selectId = id || label?.toLowerCase().replace(/\s/g, "-");
 
   return (
-    <label className="block space-y-2 text-sm text-slate-200" htmlFor={selectId}>
-      {label ? <span className="font-medium text-slate-300">{label}</span> : null}
+    <div className="space-y-stack-sm">
+      {label && (
+        <label
+          htmlFor={selectId}
+          className="font-label-md text-label-md text-on-surface-variant block"
+        >
+          {label}
+        </label>
+      )}
       <select
         id={selectId}
-        className={cn(
-          'w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-primary/60',
-          className,
-        )}
+        className={`
+          quiet-input w-full font-body-lg text-body-lg
+          ${error ? "border-error" : ""}
+          ${className}
+        `}
         {...props}
       >
-        {children}
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
       </select>
-    </label>
+      {error && <p className="font-caption text-caption text-error">{error}</p>}
+    </div>
   );
-}
+};

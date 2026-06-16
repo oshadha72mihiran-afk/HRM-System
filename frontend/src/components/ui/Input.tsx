@@ -1,24 +1,49 @@
-import type { InputHTMLAttributes } from 'react';
-import { cn } from '@/lib/cn';
+import React from "react";
 
-type InputProps = InputHTMLAttributes<HTMLInputElement> & {
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-};
+  error?: string;
+  icon?: React.ReactNode;
+}
 
-export function Input({ className, label, id, ...props }: InputProps) {
-  const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-') ?? undefined;
+export const Input: React.FC<InputProps> = ({
+  label,
+  error,
+  icon,
+  className = "",
+  id,
+  ...props
+}) => {
+  const inputId = id || label?.toLowerCase().replace(/\s/g, "-");
 
   return (
-    <label className="block space-y-2 text-sm text-slate-200" htmlFor={inputId}>
-      {label ? <span className="font-medium text-slate-300">{label}</span> : null}
-      <input
-        id={inputId}
-        className={cn(
-          'w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-primary/60 focus:bg-white/7',
-          className,
+    <div className="space-y-stack-sm">
+      {label && (
+        <label
+          htmlFor={inputId}
+          className="font-label-md text-label-md text-on-surface-variant block"
+        >
+          {label}
+        </label>
+      )}
+      <div className="relative">
+        {icon && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 text-on-surface-variant opacity-60">
+            {icon}
+          </span>
         )}
-        {...props}
-      />
-    </label>
+        <input
+          id={inputId}
+          className={`
+            quiet-input w-full font-body-lg text-body-lg placeholder:text-on-surface-variant/30
+            ${icon ? "pl-8" : ""}
+            ${error ? "border-error" : ""}
+            ${className}
+          `}
+          {...props}
+        />
+      </div>
+      {error && <p className="font-caption text-caption text-error">{error}</p>}
+    </div>
   );
-}
+};

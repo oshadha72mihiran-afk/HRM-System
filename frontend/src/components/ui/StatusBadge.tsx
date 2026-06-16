@@ -1,19 +1,44 @@
-import { cn } from '@/lib/cn';
+import React from "react";
 
-type StatusBadgeProps = {
+interface StatusBadgeProps {
   status: string;
-};
-
-const statusStyles: Record<string, string> = {
-  ACTIVE: 'bg-success/15 text-success border-success/20',
-  INACTIVE: 'bg-slate-500/15 text-slate-300 border-slate-500/20',
-  ONBOARDING: 'bg-warning/15 text-warning border-warning/20',
-  TERMINATED: 'bg-danger/15 text-danger border-danger/20',
-  PENDING: 'bg-warning/15 text-warning border-warning/20',
-  PAID: 'bg-success/15 text-success border-success/20',
-  FAILED: 'bg-danger/15 text-danger border-danger/20',
-};
-
-export function StatusBadge({ status }: StatusBadgeProps) {
-  return <span className={cn('inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]', statusStyles[status] ?? 'bg-white/10 text-slate-200 border-white/10')}>{status}</span>;
+  variant?: "active" | "inactive" | "pending" | "paid" | "failed" | "overdue";
 }
+
+export const StatusBadge: React.FC<StatusBadgeProps> = ({
+  status,
+  variant = "active",
+}) => {
+  const variantStyles = {
+    active: "bg-secondary/10 text-secondary",
+    inactive: "bg-surface-container-high text-on-surface-variant",
+    pending: "bg-outline-variant/20 text-on-surface-variant",
+    paid: "bg-secondary/10 text-secondary",
+    failed: "bg-error/10 text-error",
+    overdue: "bg-error/10 text-error animate-pulse",
+  };
+
+  const dotStyles = {
+    active: "bg-secondary",
+    inactive: "bg-outline-variant",
+    pending: "bg-outline-variant",
+    paid: "bg-secondary",
+    failed: "bg-error",
+    overdue: "bg-error",
+  };
+
+  return (
+    <span
+      className={`
+        inline-flex items-center gap-2 px-3 py-1 rounded-full
+        font-label-md text-[10px] uppercase tracking-widest
+        ${variantStyles[variant] || "bg-surface-container-high text-on-surface-variant"}
+      `}
+    >
+      <span
+        className={`w-1 h-1 rounded-full ${dotStyles[variant] || "bg-outline-variant"}`}
+      />
+      {status}
+    </span>
+  );
+};

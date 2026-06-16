@@ -1,31 +1,57 @@
-import type { ReactNode } from 'react';
+import React from "react";
 
-type TableProps = {
-  headers: string[];
-  rows: ReactNode[][];
-  emptyState?: string;
-};
+interface Column<T> {
+  key: keyof T | string;
+  header: string;
+  render?: (item: T) => React.ReactNode;
+  className?: string;
+}
 
-export function Table({ headers, rows, emptyState = 'No records found.' }: TableProps) {
-  if (rows.length === 0) {
-    return <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-8 text-sm text-slate-400">{emptyState}</div>;
-  }
+interface TableProps<T> {
+  columns: Column<T>[];
+  data: T[];
+  onRowClick?: (item: T) => void;
+  className?: string;
+}
 
+export function Table<T extends Record<string, any>>({
+  columns,
+  data,
+  onRowClick,
+  className = "",
+}: TableProps<T>) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-      <table className="w-full text-left text-sm text-slate-200">
-        <thead className="bg-white/5 text-xs uppercase tracking-[0.18em] text-slate-400">
+    <div className="overflow-x-auto">
+      <table className={`w-full text-left ${className}`}>
+        <thead className="bg-surface-container-low/30">
           <tr>
-            {headers.map((header) => (
-              <th key={header} className="px-5 py-4 font-medium">{header}</th>
+            {columns.map((col) => (
+              <th
+                key={String(col.key)}
+                className="px-8 py-4 font-label-md text-label-md text-on-surface-variant/70 uppercase tracking-widest border-b border-surface-container"
+              >
+                {col.header}
+              </th>
             ))}
           </tr>
         </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <tr key={index} className="border-t border-white/10">
-              {row.map((cell, cellIndex) => (
-                <td key={cellIndex} className="px-5 py-4">{cell}</td>
+        <tbody className="divide-y divide-surface-container">
+          {data.map((item, index) => (
+            <tr
+              key={index}
+              onClick={() => onRowClick?.(item)}
+              className={`
+                hover:bg-secondary-container/5 transition-colors
+                ${onRowClick ? "cursor-pointer" : ""}
+              `}
+            >
+              {columns.map((col) => (
+                <td
+                  key={String(col.key)}
+                  className={`px-8 py-5 ${col.className || ""}`}
+                >
+                  {col.render ? col.render(item) : String(item[col.key] ?? "")}
+                </td>
               ))}
             </tr>
           ))}
